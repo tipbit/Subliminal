@@ -1,0 +1,211 @@
+#!/bin/bash
+
+#  For details and documentation:
+#  http://github.com/inkling/Subliminal
+#
+#  Copyright 2013 Inkling Systems, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+
+# `subliminal-instrument` is a wrapper around `instruments` which 
+# runs an application with the Subliminal instrument attached 
+# and formats the output of that instrument.
+#
+# `subliminal-instrument` accepts the same arguments as `instruments` apart 
+# from the template argument (`-t`).
+
+
+# This function should be used instead of `exit` 
+# so that this script may perform necessary cleanup.
+cleanup_and_exit () {
+    kill $INSTRUMENTS_PID 2> /dev/null
+    exit $1
+}
+trap "cleanup_and_exit 1" SIGINT SIGTERM
+
+
+### Definitions of global variables/functions for event processing
+
+COLOR_NORMAL=$'\033[0m'
+COLOR_BOLD=$'\033[1m'
+COLOR_FAINT=$'\033[2m'
+COLOR_UNDERLINE=$'\033[4m'
+COLOR_RED=$'\033[31m'
+COLOR_GREEN=$'\033[32m'
+COLOR_YELLOW=$'\033[33m'
+CHECKMARK=$'\xe2\x9c\x93'
+XMARK=$'\xe2\x9c\x97'
+WARNING_SIGN=$'\xe2\x9a\xa0'
+CLEAR_TO_EOL=`tput el`
+
+INDENT_NUM=0
+regenerate_indent () {
+    local indent_size=2
+    INDENT=`perl -e "print ' ' x ($INDENT_NUM * $indent_size);"`
+}
+regenerate_indent   # to start
+increment_indent () {
+    INDENT_NUM=$((INDENT_NUM + 1))
+    regenerate_indent
+}
+decrement_indent () {
+    INDENT_NUM=$((INDENT_NUM - 1))
+    regenerate_indent
+}
+
+# Dividers will be console-width
+NUM_COLS=`tput cols`
+DIVIDER=`perl -e "print \"\xe2\x94\x81\" x $NUM_COLS;"`
+divider_with_down_line () {
+    # Insert the down line after the indent
+    # The idea being that the messages above the divider will be linked to the next line
+    echo ${DIVIDER:0:${#INDENT}}$'\xe2\x94\xb3'${DIVIDER:${#INDENT} + 1}
+}
+DIVIDER_ACTIVE=false
+print_divider_with_down_line () {
+    local with_down_line=$1
+
+    local divider=`$with_down_line && echo "$(divider_with_down_line)" || echo "$DIVIDER"`
+    # Dividers are not indented
+    echo "${COLOR_FAINT}${divider}${COLOR_NORMAL}"
+    $DIVIDER_ACTIVE && DIVIDER_ACTIVE=false || DIVIDER_ACTIVE=true
+}
+
+LAST_MESSAGE_TYPE=""
+LAST_MESSAGE=""
+
+
+### Event processing
+
+handle_event () { 
+    local event="$1"
+
+    # Screen diagnostic messages from "ScriptAgent"
+    if [[ "$event" == *ScriptAgent* ]]; then return; fi
+
+    # Strip event timestamp
+    local d="[[:digit:]]"
+    local event=`echo "$event" | sed -E "s|$d+-$d+-$d+ $d+:$d+:$d+ \+$d+ ||"`
+
+    # Log individual events, of format "<type>: <message>"
+    local message_type=${event%:*}
+    local message=${event#*: }
+    case "$message_type" in
+        Start)
+            # So that the pass or fail message can overwrite this,
+            # leave room for a check or X mark and a space at the beginning, 
+            # and don't print a newline
+            echo -n "${INDENT}  $message"
+            ;;
+        Pass|Fail)
+            if $DIVIDER_ACTIVE; then
+                # Link the logs to the check mark
+                print_divider_with_down_line true
+            fi
+
+            local status_symbol=`[[ "$message_type" == Pass ]] && 
+                echo "${COLOR_GREEN}${CHECKMARK}${COLOR_NORMAL}" || 
+                echo "${COLOR_RED}${XMARK}${COLOR_NORMAL}"`
+
+            # The carriage return + clear-to-end-of-line will overwrite the start message 
+            # if we didn't print something else in the interim
+            echo -e "\r${CLEAR_TO_EOL}${INDENT}${status_symbol} $message"
+            ;;
+        Instruments\ Trace\ Complete*)
+            # suppress this message
+            ;;
+        *)
+            case "$message" in
+                Testing\ started*)
+                    echo "${INDENT}${COLOR_BOLD}${message}${COLOR_NORMAL}"
+                    increment_indent
+
+                    local message_type=Begin
+                    ;;
+                Test\ *\ started*)
+                    # Bold the message, except for the test name, which is underlined
+                    local test_name=`echo "$message" | sed 's|.*\"\(.*\)\".*|\1|'`
+                    echo "${INDENT}${COLOR_BOLD}Test${COLOR_NORMAL} ${COLOR_UNDERLINE}${test_name}${COLOR_NORMAL} ${COLOR_BOLD}started${COLOR_NORMAL}."    
+                    increment_indent
+
+                    local message_type=Begin
+                    ;;
+                Test\ *\ finished*|Test\ *\ terminated\ abnormally*)
+                    if $DIVIDER_ACTIVE && [[ "$message" = Test\ *\ terminated\ abnormally* ]]; then
+                        # Link the error message to the start of the termination message
+                        print_divider_with_down_line true
+                    fi
+
+                    # Bold the message, except for the test name, which is underlined
+                    local formatted_message="${INDENT}${COLOR_BOLD}${message}${COLOR_NORMAL}"
+                    local formatted_message=`echo "$formatted_message" | sed "s|\"\(.*\)\"|${COLOR_NORMAL}${COLOR_UNDERLINE}\1${COLOR_NORMAL}${COLOR_BOLD}|"`
+                    echo -e "$formatted_message\n"
+                    decrement_indent
+
+                    local message_type=End
+                    ;;
+                Testing\ finished*)
+                    decrement_indent
+                    echo "${INDENT}${COLOR_BOLD}${message}${COLOR_NORMAL}"
+
+                    local message_type=End
+                    ;;
+                *)
+                    # If the last message logged was a test status message
+                    # and did not end a section, print a divider
+                    if [[ -n "$LAST_MESSAGE" && 
+                           ! ( "$LAST_MESSAGE_TYPE" == Other || "$LAST_MESSAGE_TYPE" == End ) ]]; then
+                        if [[ "$LAST_MESSAGE_TYPE" == Start ]]; then
+                            # break the current line
+                            echo ""
+                        fi
+                        print_divider_with_down_line false
+                    fi
+
+                    # Non test-status messages are not indented if there's a divider active
+                    local local_indent=`$DIVIDER_ACTIVE && echo "" || echo "$INDENT"`
+
+                    # Warnings are prefixed and logged in normal type
+                    if [[ "$message_type" == Warning ]]; then
+                        echo "${local_indent}${COLOR_YELLOW}${WARNING_SIGN}${COLOR_NORMAL} $message"
+                    else
+                        # Other messages are logged faintly
+                        # including errors, because they'll be reported as having 
+                        # caused a test case or test to fail
+                        echo "${local_indent}${COLOR_FAINT}${message}${COLOR_NORMAL}"
+                    fi
+
+                    local message_type=Other  # coalesce the types
+                    ;;
+            esac
+            ;;
+    esac
+
+    LAST_MESSAGE_TYPE=$message_type
+    LAST_MESSAGE=$message
+}
+
+# We want to process the output of `instruments` in realtime. However,
+# `instruments` buffers its output if it determines that it is being piped to 
+# another process. We can get around this by routing the output through a 
+# pseudoterminal (as described in https://github.com/jonathanpenn/AutomationExample/blob/master/unix_instruments, 
+# thanks Jonathan Penn). It's a little unfortunate to hardcode a pseudoterminal 
+# pair but the dynamic functions are only available in C.
+xcrun instruments\
+    -t "${HOME}/Library/Application Support/Instruments/Templates/Subliminal/Subliminal.tracetemplate"\
+    "$@" &> /dev/ttyvf & INSTRUMENTS_PID=$!
+while read EVENT; do handle_event "$EVENT"; done < /dev/ptyvf
+
+cleanup_and_exit 0
