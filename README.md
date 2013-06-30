@@ -514,14 +514,6 @@ FAQ
 	their local machine rather than on the build server), and so can enter their 
 	password as required, they may execute `subliminal-test` with the `--live` option.
 
-	We would gladly welcome alternate workarounds for the issues above. In some 
-	environments, [modifying `/etc/authorization`](http://stackoverflow.com/a/11416025/495611) 
-	will suffice to authorize `instruments`. And, if developers only need to test 
-	on the latest SDK, they can rely on `instruments` using that SDK by default, 
-	and avoid specifying an SDK version--though that behavior may change with the 
-	Xcode 5 developer tools: see the note at the bottom of the bug report 
-	[here](http://openradar.appspot.com/radar?id=3107401).
-
 Known Issues
 ------------
 

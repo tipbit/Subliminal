@@ -28,10 +28,10 @@
 print_usage_and_fail () {
 	echo """
 subliminal-test (-project <project_path> | -workspace <workspace_path>) 
-		( -sim_device <device_type> | -hw_id <udid> )
+		( -sim_device <device_type> -sim_version <version> | -hw_id <udid> )
 		(-login_password <password> | --live)
 		[-build_tool <tool_name>] [-scheme <scheme_name>] [-sdk <sdk>] [-replacement_bundle_id <id>] [--quiet_build]
-		[-sim_version <version>] [-timeout <timeout>] [-output <output_dir>] 
+		[-timeout <timeout>] [-output <output_dir>] 
 		[-e <variable> <value>]
 
 \`subliminal-test\` builds a scheme contained in an Xcode project or Xcode workspace,
@@ -64,11 +64,20 @@ Required arguments:
 
 	-sim_device <device_type>	The type of device to simulate.
 					Acceptable values are listed in the iOS Simulator's 
-					\"Hardware -> Device\" menu. Either this or \`-hw_id\` must 
-					be specified.
+					\"Hardware -> Device\" menu. Either this and \`-sim-version\` 
+					both, or \`-hw_id\`, must be specified.
+
+	-sim_version <version>		The version of the iOS Simulator SDK to test with, 
+					e.g. 5.1 or 6.1. Either this and \`-sim-device\` both, 
+					or \`-hw_id\`, must be specified.
+
+					Note that the iOS Simulator does not accept certain combinations 
+					of device type and SDK, e.g. \"iPhone (Retina 4-inch)\" 
+					and \"5.1\".
 
 	-hw_id <udid>			The UDID of the hardware to target.
-					Either this or \`-sim_device\` must be specified.
+					Either this, or both \`-sim_device\` and \`-sim_version\`, 
+					must be specified.
 
 	-login_password <password>	The current user's login password. This permits 
 					this script to work around several bugs in Apple's \`instruments\` 
@@ -120,14 +129,6 @@ Optional build arguments:
 					log output entirely, by using \`xctool\` as a build tool.
 
 Optional testing arguments:
-	-sim_version <version>		The version of the iOS Simulator SDK to test with, 
-					e.g. 5.1 or 6.1. Defaults to the latest iOS Simulator SDK 
-					installed. Ignored if \`-sim_device\` is not specified.
-
-					Note that the iOS Simulator does not accept certain combinations 
-					of device type and SDK, e.g. \"iPhone (Retina 4-inch)\" 
-					and \"5.1\".
-
 	-timeout <timeout>		The maximum duration for which to run the tests before aborting.
 					Specified in milliseconds and as a number rather than a string. Defaults to infinite.
 
@@ -223,7 +224,7 @@ fi
 
 # Enforce required args
 if [[ ( -z "$PROJECT" && -z "$WORKSPACE" ) || 
-	( -z "$SIM_DEVICE" && -z "$HW_ID" ) || 
+	( ( -z "$SIM_DEVICE" || -z "$SIM_VERSION" ) && -z "$HW_ID" ) || 
 	( -z "$LOGIN_PASSWORD" && -z "$LIVE" ) ]]; then
 	echo "Missing required arguments"
 	print_usage_and_fail
@@ -413,28 +414,23 @@ if [[ -n "$SIM_DEVICE" ]]; then
 		cleanup_and_exit 1
 	fi
 
-	# Set the simulator's version if specified
-	if [[ -n "$SIM_VERSION" ]]; then
-		echo "\nSetting simulator version..."
+	# Set the simulator's version
+	echo "\nSetting simulator version..."
 
-		"$SCRIPT_DIR/set_simulator_version" "$SIM_VERSION"
-		if [ $? -ne 0 ]; then
-			echo "\nERROR: Could not set the simulator's version."
-			cleanup_and_exit 1
-		fi
-
-		# By default, the instruments command-line tool 
-		# always runs using the latest SDK
-		# http://stackoverflow.com/questions/12836129/launch-a-specific-hardware-version-of-ios-simulator-using-instruments-command-li)
-		# We must disable the SDKs other than the one we're targeting 
-		# to force it to use the simulator's current setting
-		enable_SDK_version_or_all "$SIM_VERSION"
-
-		echo "\nSuccessfully set simulator version."
-	else
-		# fall back on instruments' default behavior
-		echo "\nSimulator version not specified. Defaulting to latest simulator installed."
+	"$SCRIPT_DIR/set_simulator_version" "$SIM_VERSION"
+	if [ $? -ne 0 ]; then
+		echo "\nERROR: Could not set the simulator's version."
+		cleanup_and_exit 1
 	fi
+
+	# By default, the instruments command-line tool 
+	# always runs using the latest SDK
+	# http://stackoverflow.com/questions/12836129/launch-a-specific-hardware-version-of-ios-simulator-using-instruments-command-li)
+	# We must disable the SDKs other than the one we're targeting 
+	# to force it to use the simulator's current setting
+	enable_SDK_version_or_all "$SIM_VERSION"
+
+	echo "\nSuccessfully set simulator version."
 
 	# Reset the simulator
 	# This has got to be done after setting the simulator's version
