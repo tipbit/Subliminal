@@ -404,24 +404,10 @@ echo "\n\nPreparing to install app..."
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 if [[ -n "$SIM_DEVICE" ]]; then
-	# Set the simulator's device type
-	echo "\nSetting simulator device type..."
-	"$SCRIPT_DIR/set_simulator_device" "$SIM_DEVICE"
-	if [ $? -eq 0 ]; then
-		echo "Successfully set simulator device type."
-	else
-		echo "\nERROR: Could not set the simulator's device type."
-		cleanup_and_exit 1
-	fi
-
-	# Set the simulator's version
-	echo "\nSetting simulator version..."
-
-	"$SCRIPT_DIR/set_simulator_version" "$SIM_VERSION"
-	if [ $? -ne 0 ]; then
-		echo "\nERROR: Could not set the simulator's version."
-		cleanup_and_exit 1
-	fi
+	# Configure the simulator's properties
+	echo "\nConfiguring the simulator for testing..."
+	echo "- Setting the device to \"$SIM_DEVICE\""
+	echo "- Setting the version to $SIM_VERSION"
 
 	# By default, the instruments command-line tool 
 	# always runs using the latest SDK
@@ -430,19 +416,15 @@ if [[ -n "$SIM_DEVICE" ]]; then
 	# to force it to use the simulator's current setting
 	enable_SDK_version_or_all "$SIM_VERSION"
 
-	echo "\nSuccessfully set simulator version."
+	echo "- Resetting simulator content and settings"
 
-	# Reset the simulator
-	# This has got to be done after setting the simulator's version
-	# so that we wipe the appropriate content and settings
-	echo "\nResetting simulator content and settings..."
-	"$SCRIPT_DIR/reset_simulator"
-	if [ $? -eq 0 ]; then
-		echo "Successfully reset iOS Simulator."
-	else
-		echo "\nERROR: Could not reset the simulator."
+	"$SCRIPT_DIR/simulator-set" -device "$SIM_DEVICE" -version "$SIM_VERSION" --reset
+	if [ $? -ne 0 ]; then
+		echo "\nERROR: Could not configure the simulator."
 		cleanup_and_exit 1
 	fi
+
+	echo "Successfully configured the Simulator for testing."
 fi
 
 # Set paths to save Instruments' output (at least temporarily)
