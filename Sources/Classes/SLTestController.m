@@ -225,6 +225,7 @@ u_int32_t random_uniform(u_int32_t upperBound) {
         _runSeed = SLTestControllerRandomSeed;
         _defaultTimeout = kDefaultTimeout;
         _startTestingSemaphore = dispatch_semaphore_create(0);
+        _performInconsistentStateCheck = YES;
     }
     return self;
 }
@@ -255,6 +256,7 @@ u_int32_t random_uniform(u_int32_t upperBound) {
 #if TARGET_IPHONE_SIMULATOR
 - (void)abortIfSimulatorIsInconsistent {
     if ([SLTestController isBeingUnitTested]) return;
+    if (!self.performInconsistentStateCheck) return;
     
     const UIDeviceOrientation testOrientation = UIDeviceOrientationPortrait;
 
