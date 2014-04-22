@@ -38,15 +38,48 @@ void SLLog(NSString *format, ...) NS_FORMAT_FUNCTION(1,2);
 
 /**
  Asynchronously logs a message to the testing environment.
- 
+
  This variant of `SLLog` is for use by the application
  and other main thread contexts.
- 
+
  @param format A format string (in the manner of `-[NSString stringWithFormat:]`).
  @param ... (Optional) A comma-separated list of arguments to substitute into `format`.
  */
 void SLLogAsync(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 
+
+/**
+ Asynchronously logs an error message to the testing environment.
+
+ Functionally equivalent to `NSLog`, except for the output medium.
+ The message is output using `[[SLLogger sharedLogger] logError:]`.
+
+ @param format A format string (in the manner of `-[NSString stringWithFormat:]`).
+ @param ... (Optional) A comma-separated list of arguments to substitute into `format`.
+ */
+void SLLogErrorAsync(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
+
+/**
+ Asynchronously logs a warning message to the testing environment.
+
+ Functionally equivalent to `NSLog`, except for the output medium.
+ The message is output using `[[SLLogger sharedLogger] logWarning:]`.
+
+ @param format A format string (in the manner of `-[NSString stringWithFormat:]`).
+ @param ... (Optional) A comma-separated list of arguments to substitute into `format`.
+ */
+void SLLogWarningAsync(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
+
+/**
+ Asynchronously logs a debug message to the testing environment.
+
+ Functionally equivalent to `NSLog`, except for the output medium.
+ The message is output using `[[SLLogger sharedLogger] logDebug:]`.
+
+ @param format A format string (in the manner of `-[NSString stringWithFormat:]`).
+ @param ... (Optional) A comma-separated list of arguments to substitute into `format`.
+ */
+void SLLogDebugAsync(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 
 /**
  The shared `SLLogger` used by Subliminal to log test progress. It may also be
