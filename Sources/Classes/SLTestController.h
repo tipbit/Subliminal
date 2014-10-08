@@ -46,6 +46,11 @@
  */
 @property (nonatomic) NSTimeInterval defaultTimeout;
 
+/**
+ If YES, performs the inconsistent state check. Defaults to YES.
+*/
+@property (nonatomic, assign) BOOL performInconsistentStateCheck;
+
 #pragma mark - Getting the Shared Test Controller
 /// -------------------------------------------
 /// @name Getting the Shared Test Controller
