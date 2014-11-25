@@ -19,7 +19,7 @@
 #
 
 
-# `subliminal-test` builds a scheme contained in an Xcode project or Xcode workspace, 
+# `subliminal-test` builds a scheme contained in an Xcode project or Xcode workspace,
 # then tests the product using Subliminal.
 #
 # Execute `subliminal-test` with no arguments to print usage.
@@ -30,7 +30,7 @@ print_usage_and_fail () {
 subliminal-test (-project <project_path> | -workspace <workspace_path> | -prebuilt_app <app_path>)
 		( -sim_device <device_type> | -hw_id <udid> )
 		[-build_tool <tool_name>] [-scheme <scheme_name>] [-sdk <sdk>] [-replacement_bundle_id <id>] [--quiet_build]
-		[-sim_version <version>] [-timeout <timeout>] [-output <output_dir>] 
+		[-sim_version <version>] [-timeout <timeout>] [-output <output_dir>]
 		[-e <variable> <value>]
 
 \`subliminal-test\` builds a scheme contained in an Xcode project or Xcode workspace,
@@ -76,7 +76,7 @@ Required arguments:
 					e.g. \"iPad\".
 
 					Note that (despite the response of \`instruments -s devices\`)
-					the iOS Simulator does not accept certain combinations 
+					the iOS Simulator does not accept certain combinations
 					of device type and SDK (as specified using the \`-sim_version\`
 					argument), e.g. \"iPhone\" and \"7.1\".
 
@@ -86,7 +86,7 @@ Required arguments:
 					Either this or \`-sim_device\` must be specified.
 
 Optional build arguments:
-	-build_tool <tool_name>		The tool to use to build the scheme. Should be either \"xcrun xcodebuild\" 
+	-build_tool <tool_name>		The tool to use to build the scheme. Should be either \"xcrun xcodebuild\"
 					or \"xctool\". Defaults to \"xcrun xcodebuild\".
 
 	-scheme <scheme_name>		The scheme to use to build the specified project or workspace.
@@ -96,31 +96,31 @@ Optional build arguments:
 					Defaults to \"Release\".
 
 	-sdk <sdk>			The SDK to use to build the specified project or workspace.
-					This should be an iOS Simulator SDK if \`-sim_device\` is specified, 
-					or an iOS device SDK if \`-hw_id\` is specified. Defaults to 
-					\"iphonesimulator\" (the latest iOS Simulator SDK installed) 
-					if \`-sim_device\` is specified, or \"iphoneos\" (the latest 
+					This should be an iOS Simulator SDK if \`-sim_device\` is specified,
+					or an iOS device SDK if \`-hw_id\` is specified. Defaults to
+					\"iphonesimulator\" (the latest iOS Simulator SDK installed)
+					if \`-sim_device\` is specified, or \"iphoneos\" (the latest
 					iOS device SDK) if \`-hw_id\` is specified.
 
 	-replacement_bundle_id <id>	The identifier to use to overwrite the product's bundle identifier.
 					When testing in-app purchase, this must be the identifier of your main app.
-					
+
 					This option should only be used when testing in the Simulator,
-					because two applications with the same identifier cannot be installed simultaneously, 
-					and devices cannot be programmatically reset. If this is set and tests are running 
-					in the Simulator, the Simulator will be reset after testing 
+					because two applications with the same identifier cannot be installed simultaneously,
+					and devices cannot be programmatically reset. If this is set and tests are running
+					in the Simulator, the Simulator will be reset after testing
 					to avoid collisions on subsequent runs.
 
-	--quiet_build			If specified, the script will only log build output to the console 
-					if the build fails. Builds may be made less verbose, without hiding 
+	--quiet_build			If specified, the script will only log build output to the console
+					if the build fails. Builds may be made less verbose, without hiding
 					log output entirely, by using \`xctool\` as a build tool.
 
 Optional testing arguments:
-	-sim_version <version>		The version of the iOS Simulator SDK to test with, 
-					e.g. 6.1 or 7.1. Defaults to the latest iOS Simulator SDK 
+	-sim_version <version>		The version of the iOS Simulator SDK to test with,
+					e.g. 6.1 or 7.1. Defaults to the latest iOS Simulator SDK
 					installed. Ignored if \`-sim_device\` is not specified.
 
-					Note that the iOS Simulator does not accept certain combinations 
+					Note that the iOS Simulator does not accept certain combinations
 					of device type and SDK, e.g. \"iPhone\" and \"7.1\".
 
 	-timeout <timeout>		The maximum duration for which to run the tests before aborting.
@@ -134,7 +134,7 @@ Optional testing arguments:
 
 					Has no default value.
 
-	--verbose_logging		Enables UIAutomation's debug logs, which record every user interaction simulated 
+	--verbose_logging		Enables UIAutomation's debug logs, which record every user interaction simulated
 					by the Automation instrument.
 
 	--xcpretty		Pipe the build output to xcpretty if it is installed.
@@ -264,13 +264,13 @@ if [[ ( -z "$PROJECT" && -z "$WORKSPACE" && -z "$PREBUILT_APP" ) ||
 	print_usage_and_fail
 fi
 
-# resets the simulator, or uninstalls the app from the device 
+# resets the simulator, or uninstalls the app from the device
 # (the best that we can do, given device support
 # --also probably better not to be as destructive as a reset on a device)
 # This function must be declared here to be called from `cleanup_and_exit`
 reset_simulator_or_device () {
 	local reset_success=0
-	
+
 	if [[ -n "$SIM_DEVICE" ]]; then
 		# Make sure to maintain the previously set device type/version
 		"$SCRIPT_DIR/simulator-set" --device "$SIM_DEVICE" --version "$SIM_VERSION" --reset
@@ -281,12 +281,12 @@ reset_simulator_or_device () {
 			echo "\nERROR: Could not reset the simulator."
 		fi
 	else
-		# `device-install` requires that we specify the app, 
-		# so if we haven't built it yet just return 
+		# `device-install` requires that we specify the app,
+		# so if we haven't built it yet just return
 		# (we obviously haven't installed it anyway)
 		[ -z "$APP" ] && return 0
 
-		# It's safe to ask `device-install.m` to uninstall the app even if 
+		# It's safe to ask `device-install.m` to uninstall the app even if
 		# it's not currently installed, though (`device-install.m` will still return success)
 		local timeout_arg=`[[ -n "$TIMEOUT" ]] && echo "--timeout $TIMEOUT" || echo ""`
 		"$SCRIPT_DIR/device-install.m" --hw_id $HW_ID --app "$APP" $timeout_arg uninstall
@@ -305,13 +305,13 @@ reset_simulator_or_device () {
 # Declared here just for proximity to `reset_simulator_or_device`
 reinstall_app_on_device () {
 	local reinstall_success=0
-	
+
 	# Uninstall app
 	echo ""
 	reset_simulator_or_device
 	reinstall_success=$?
 	[ $reinstall_success -eq 0 ] || return $reinstall_success
-	
+
 	# Install app
 	echo ""
 	local timeout_arg=`[[ -n "$TIMEOUT" ]] && echo "--timeout $TIMEOUT" || echo ""`
@@ -358,7 +358,7 @@ cleanup_and_exit () {
 	fi
 
 	# Remove temporary files
-	# This must be done after the device is potentially reset, 
+	# This must be done after the device is potentially reset,
 	# because that process requires access to the application being uninstalled
 	[[ -n "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 	[[ -n "$BUILD_LOG" ]] && rm -rf "$BUILD_LOG"
@@ -533,7 +533,7 @@ fi
 # If `-login_password` was specified (i.e. the user has not yet pre-authorized `instruments`)
 # attempt to authorize instruments using the password
 if [[ -n "$LOGIN_PASSWORD" ]]; then
-	# First attempt to authorize `instruments` when it is launched: 
+	# First attempt to authorize `instruments` when it is launched:
 	# in the background, monitor for, and dismiss, the dialog it shows
 	osascript "$SCRIPT_DIR/authorize_instruments.scpt" "$LOGIN_PASSWORD" &
 	# Track pid to be killed when the parent script ends
@@ -542,8 +542,8 @@ fi
 
 launch_instruments () {
 	# Second attempt to authorize `instruments` ourselves
-	# (in case the dialog does not show, as in certain CI environments 
-	# like Travis): enter the login password on the command line, 
+	# (in case the dialog does not show, as in certain CI environments
+	# like Travis): enter the login password on the command line,
 	# by piping the password, followed by a newline, to instruments
 	# (If the user did not supply a login password, this will just print a newline)
 
@@ -551,7 +551,15 @@ launch_instruments () {
 	# and the environment variables passed to this script
 	# are passed to instruments and the app by being exported at the top of this script
 	local timeout_arg=`[[ -n "$TIMEOUT" ]] && echo "-l $TIMEOUT" || echo ""`
-	local device=`[[ -n "$HW_ID" ]] && echo "$HW_ID" || echo "$SIM_DEVICE - Simulator - iOS $SIM_VERSION"`
+
+  XCODE_VERSION=`xcodebuild -version | grep 'Xcode 6'`
+  if [[ $XCODE_VERSION =~ "Xcode 6" ]];
+  then
+    local device=`[[ -n "$HW_ID" ]] && echo "$HW_ID" || echo "$SIM_DEVICE ($SIM_VERSION Simulator)"`
+  else
+    local device=`[[ -n "$HW_ID" ]] && echo "$HW_ID" || echo "$SIM_DEVICE - Simulator - iOS $SIM_VERSION"`
+  fi
+
 	printf "$LOGIN_PASSWORD\n" | "$SCRIPT_DIR/subliminal-instrument.sh"\
 		-D "$TRACE_FILE"\
 		$timeout_arg\
@@ -582,7 +590,7 @@ launch_instruments () {
 	KILL_INSTRUMENTS_PID=$!
 
 	wait $INSTRUMENTS_PID 2> /dev/null
-	local instruments_exit_status=$? 
+	local instruments_exit_status=$?
 	# instruments might have completed before the kill function awoke
 	kill $KILL_INSTRUMENTS_PID 2> /dev/null
 
@@ -595,11 +603,11 @@ INSTRUMENTS_LAUNCH_TIMEOUTS=( 30 45 60 120 )
 launch_instruments ${INSTRUMENTS_LAUNCH_TIMEOUTS[INSTRUMENTS_RETRY_COUNT]}
 while ([ ! -e "$RESULT_LOG" ] || grep -qi "Please relaunch the tests" "$RESULT_LOG") &&
 	  (( INSTRUMENTS_RETRY_COUNT < ${#INSTRUMENTS_LAUNCH_TIMEOUTS[@]} )); do
-	# Under poorly understood circumstances, in certain CI environments like Travis, 
-	# instruments may fail to run what otherwise appears to be a perfectly good app 
-	# (in that an app prepared exactly the same way may be run without error on another run), 
+	# Under poorly understood circumstances, in certain CI environments like Travis,
+	# instruments may fail to run what otherwise appears to be a perfectly good app
+	# (in that an app prepared exactly the same way may be run without error on another run),
 	# doing one of the following:
-	# 
+	#
 	# * hanging on launch
 	# * launching but immediately aborting with a message like
 	#	"Recording cancelled : At least one target failed to launch; aborting run
@@ -618,7 +626,7 @@ while ([ ! -e "$RESULT_LOG" ] || grep -qi "Please relaunch the tests" "$RESULT_L
 	build_app
 	[ $? -eq 0 ] || cleanup_and_exit 1
 
-	# Reset the simulator/reinstall the app on the device 
+	# Reset the simulator/reinstall the app on the device
 	# in case instruments installed the app and then aborted
 	if [[ -n "$SIM_DEVICE" ]]; then
 		reset_simulator_or_device
