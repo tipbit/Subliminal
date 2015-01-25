@@ -134,10 +134,8 @@ Optional testing arguments:
 
 					Has no default value.
 
-	--verbose_logging		Enables UIAutomation's debug logs, which record every user interaction simulated
-					by the Automation instrument.
-
-	--xcpretty		Pipe the build output to xcpretty if it is installed.
+	--verbose_logging		Enables UIAutomation's debug logs, which record every user interaction simulated 
+					by the Automation instrument. 
 
 	-e <variable> <value>		An environment variable setting. You may specify more than one.
 	"""
@@ -186,10 +184,6 @@ case $1 in
 
 	--verbose_logging)
 		VERBOSE_LOGGING=true
-		shift 1;;
-
-	--xcpretty)
-		XCPRETTY=true
 		shift 1;;
 
 	# Set argument, wait for value
@@ -448,11 +442,7 @@ build_app () {
 	(
 		[[ -e "$BUILD_LOG" ]] && exec >"$BUILD_LOG" 2>&1
 
-		if [[ -n $XCPRETTY ]] && $XCPRETTY && xcpretty -v >/dev/null 2>&1; then
-			build_base_command "clean build" | xcpretty -c --no-utf; exit ${PIPESTATUS[0]}
-		else
-			build_base_command "clean build"
-		fi
+		build_base_command "clean build"
 	)
 
 	if [ $? -ne 0 ]; then
