@@ -45,27 +45,6 @@ void SLLog(NSString *format, ...) {
     va_end(args);
 }
 
-void SLLogDebug(NSString *format, ...) {
-    va_list args;
-    va_start(args, format);
-    [[SLLogger sharedLogger] logDebug:[[NSString alloc] initWithFormat:format arguments:args]];
-    va_end(args);
-}
-
-void SLLogError(NSString *format, ...) {
-    va_list args;
-    va_start(args, format);
-    [[SLLogger sharedLogger] logError:[[NSString alloc] initWithFormat:format arguments:args]];
-    va_end(args);
-}
-
-void SLLogWarning(NSString *format, ...) {
-    va_list args;
-    va_start(args, format);
-    [[SLLogger sharedLogger] logWarning:[[NSString alloc] initWithFormat:format arguments:args]];
-    va_end(args);
-}
-
 void SLLogAsync(NSString *format, ...) {
     va_list args;
     va_start(args, format);
