@@ -72,21 +72,6 @@
  */
 + (instancetype)elementWithAccessibilityLabel:(NSString *)label value:(NSString *)value traits:(UIAccessibilityTraits)traits;
 
-
-/**
- Creates and returns an element that matches objects in the accessibility hierarchy
- with the specified accessibility label and accessibility identifier.
- 
- See the [UIAccessibility Protocol Reference](https://developer.apple.com/library/ios/documentation/uikit/reference/UIAccessibility_Protocol/Introduction/Introduction.html)
- for guidance in determining appropriate accessibility labels and identifiers.
- 
- @param label A label that identifies a matching object.
- If this is `nil`, the element does not restrict matches by label.
- @param identifier The accessibility identifier of a matching object.
- If this is `nil`, the element does not restrict matches by identifier.
- */
-+ (instancetype)elementWithAccessibilityLabel:(NSString *)label accessibilityIdentifier:(NSString *)identifier;
-
 /**
  Creates and returns an element that matches objects in the accessibility hierarchy
  with the specified accessibility identifier.

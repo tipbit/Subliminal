@@ -103,23 +103,6 @@ UIAccessibilityTraits SLUIAccessibilityTraitAny = 0;
     } description:[NSString stringWithFormat:@"label: %@; value: %@; traits: %@", label, value, traitsString]];
 }
 
-+ (instancetype)elementWithAccessibilityLabel:(NSString *)label accessibilityIdentifier:(NSString *)identifier {
-    return [[self alloc] initWithPredicate:^BOOL(NSObject *obj) {
-        BOOL matchesLabel = ((label == nil) || [obj.accessibilityLabel isEqualToString:label]);
-        
-        BOOL matchesIdentifier = NO;
-        if (identifier) {
-            if ([obj respondsToSelector:@selector(accessibilityIdentifier)]) {
-                matchesIdentifier = [[obj performSelector:@selector(accessibilityIdentifier)] isEqualToString:identifier];
-            }
-        } else {
-            matchesIdentifier = YES;
-        }
-        
-        return (matchesLabel && matchesIdentifier);
-    } description:[NSString stringWithFormat:@"label: %@; identifier: %@", label, identifier]];
-}
-
 + (instancetype)elementWithAccessibilityIdentifier:(NSString *)identifier {
     return [[self alloc] initWithPredicate:^BOOL(NSObject *obj) {
         if (![obj respondsToSelector:@selector(accessibilityIdentifier)]) return NO;
