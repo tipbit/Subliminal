@@ -202,19 +202,6 @@
 - (BOOL)isTappable;
 
 /**
- Determines whether the specified element is valid, and if so, if it is tappable.
-
- This method returns immediately, but unlike `-isTappable`, will not raise
- an `SLUIAElementNotTappableException` if the element is not tappable--it will
- just return `NO`. This allows test writers to wait for an element to appear
- without having to worry about whether the element is valid at the start of the wait.
-
- @return `YES` if the user interface element represented by the specified element
- both [exists](-isValid) and is [tappable](-isTappable), `NO` otherwise.
- */
-- (BOOL)isValidAndTappable;
-
-/**
  Determines whether the specified element currently receives keyboard input.
 
  That is, whether the receiver is first responder.

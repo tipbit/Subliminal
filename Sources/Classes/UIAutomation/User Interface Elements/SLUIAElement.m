@@ -144,10 +144,6 @@ static const void *const kDefaultTimeoutKey = &kDefaultTimeoutKey;
     return isTappable;
 }
 
-- (BOOL)isValidAndTappable {
-    return [self isValid] && [self isTappable];
-}
-
 - (BOOL)canDetermineTappability {
     // Concrete subclasses must determine whether instances identify scroll views.
     return YES;
